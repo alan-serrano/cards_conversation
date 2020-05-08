@@ -1,0 +1,37 @@
+# Cards Conversation
+
+This app is built for practicing another language.
+
+You can create a party, the app randomly will choose a card.
+
+You can share the url of the party and everyone who whas the url can see the card on real time.
+
+# Installation
+
+* Clone the repository
+    ```
+    git clone git@github.com:alan-serrano/cards_conversation.git
+    cd cards_conversation
+    ```
+
+## Available Scripts
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+In the project directory, you can run:
+
+### `yarn start`
+
+Runs the app in the development mode.<br />
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+The page will reload if you make edits.<br />
+You will also see any lint errors in the console.
+
+### `yarn build`
+
+Builds the app for production to the `build` folder.<br />
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.<br />
+Your app is ready to be deployed!
