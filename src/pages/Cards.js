@@ -1,5 +1,6 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useContext} from 'react';
 import { useParams } from "react-router-dom";
+import { StateContext, DispatchContext } from '../Context/GlobalContext';
 import './Cards.scss'
 
 /* COMPONENTS */
@@ -36,56 +37,30 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function CardsView(props) {
-    const {
-        setLanguageISO,
-        languageISO,
-        languages,
-        languageActives,
-
-        questions,
-
-        topics,
-        normalizedTopics,
-        normalizedTopicsMap,
-        topicFilters,
-        setTopicFilters,
-        
-        difficulties,
-        normalizedDifficulties,
-        normalizedDifficultiesMap,
-        difficultyFilters,
-        setDifficultyFilters,
-
-        currentQuestions,
-        currentQuestionsMap,
-        currentQuestion,
-        setCurrentQuestion,
-
-        dataIsReady
-    } = props;
-
+function CardsView() {
     const {id} = useParams();
-
     const classes = useStyles();
 
-    const [partyIsReady, setPartyIsReady] = React.useState();
+    const {
+        questions,
+        topics,
+        card,
+        normalizedDataIsReady: dataIsReady,
+    } = useContext(StateContext);
 
-    const [currentTopic, setCurrentTopic] = React.useState();
+    const {dispatchCard} = useContext(DispatchContext);
+    const [partyIsReady, setPartyIsReady] = React.useState();
 
     // Buttons states
     const [isDisabledPrevBtn, setIsDisabledPrevBtn] = React.useState();
     const [isDisabledNextBtn, setIsDisabledNextBt] = React.useState();
     const [isDisabledRandomBtn, setIsDisabledRandomBtn] = React.useState();
 
-    React.useEffect( function checkingIfDataIsReady() {
+    useEffect( function checkingIfDataIsReady() {
         setIsDisabledPrevBtn(!dataIsReady);
         setIsDisabledNextBt(!dataIsReady);
         setIsDisabledRandomBtn(!dataIsReady);
     },[dataIsReady] );
-    
-
-    // Connecting to party
     
     useEffect( function connectParty(){
         if( id !== undefined && dataIsReady) {
@@ -102,10 +77,15 @@ function CardsView(props) {
             function getParty(snapshot) {
                 const party = snapshot.val();
                 if (party) {
-                    setCurrentQuestion(party.currentQuestion);
-                    setCurrentTopic(questions[party.currentQuestion].topicId)
-                    setDifficultyFilters(party.difficulties);
-                    setTopicFilters(party.topics);
+                    dispatchCard({
+                        type: 'UPDATE',
+                        payload: {
+                            question: party.currentQuestion,
+                            difficulty: party.difficulties,
+                            topic: party.topics
+                        }
+                    })
+
                     setPartyIsReady(true);
                 }
             }
@@ -114,40 +94,37 @@ function CardsView(props) {
                 refParty.off("value", getParty);
             }
         }
-    }, [dataIsReady, id, partyIsReady, questions, setCurrentQuestion, setDifficultyFilters, setTopicFilters]);
+    }, [dataIsReady, dispatchCard, id]);
     
-    React.useEffect( function randomCard(){
+    useEffect( function randomCard(){
         const condition = (
             id === undefined &&
-            currentQuestions !== undefined &&
-            currentQuestionsMap !== undefined &&
-            currentQuestion === undefined
+            dataIsReady &&
+            card.question === ''
         );
             
         if( condition ) {
-            let newQuestion = randomElementArray(currentQuestions);
+            let newQuestion = randomElementArray(questions.normalized);
 
-            setCurrentQuestion(newQuestion.questionId);
-            setCurrentTopic(newQuestion.topicId)
+            dispatchCard({type: 'QUESTION', payload: newQuestion.questionId});
         }
-    }, [currentQuestion, currentQuestions, currentQuestionsMap, dataIsReady, id, setCurrentQuestion]);
+    }, [card.question, questions.normalized, questions.normalizedMap, dataIsReady, id, dispatchCard]);
 
-    React.useEffect(function updateAfterChangeFilters() {
-        if( currentQuestion !== undefined && dataIsReady && !currentQuestionsMap.hasOwnProperty(currentQuestion)) {
+    useEffect(function updateAfterChangeFilters() {
+        if( card.question !== '' && dataIsReady && !questions.normalizedMap.hasOwnProperty(card.question)) {
             if (id !== undefined) {
                 const refcurrentQuestionParty = db.ref(`parties/${id}/currentQuestion`);
-                let newQuestion= randomElementArray(currentQuestions);
+                let newQuestion= randomElementArray(questions.normalized);
                 refcurrentQuestionParty.set(newQuestion.questionId)
                 
             } else {
-                let newQuestion = randomElementArray(currentQuestions);
+                let newQuestion = randomElementArray(questions.normalized);
     
-                setCurrentQuestion(newQuestion.questionId);
-                setCurrentTopic(newQuestion.topicId)
+                dispatchCard({type: 'QUESTION', payload: newQuestion.questionId});
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentQuestions, currentQuestionsMap, currentQuestion]);
+    }, [questions.normalized, questions.normalizedMap, card.question]);
 
     // Handlers
     function onUpdateCard() {
@@ -155,7 +132,7 @@ function CardsView(props) {
             setIsDisabledRandomBtn(true);
             const refcurrentQuestionParty = db.ref(`parties/${id}/currentQuestion`);
 
-            let newQuestion= randomElementArray(currentQuestions);
+            let newQuestion= randomElementArray(questions.normalized);
             refcurrentQuestionParty.set(newQuestion.questionId, (error) => {
                 if(!error) {
                     setIsDisabledRandomBtn(false);
@@ -163,22 +140,20 @@ function CardsView(props) {
             })
             
         } else if(dataIsReady) {
-            let newQuestion = randomElementArray(currentQuestions);
+            let newQuestion = randomElementArray(questions.normalized);
 
-            setCurrentQuestion(newQuestion.questionId);
-            setCurrentTopic(newQuestion.topicId)
+            dispatchCard({type: 'QUESTION', payload: newQuestion.questionId});
         }
-        
     }
 
     function handleNextClick() {
         if (id !== undefined && dataIsReady) {
             setIsDisabledNextBt(true);
             const refcurrentQuestionParty = db.ref(`parties/${id}/currentQuestion`);
-            let currentQuestionInfo = currentQuestionsMap[currentQuestion]
-            let nextQuestionInfo = currentQuestionInfo.index + 1 < currentQuestions.length ?
-                currentQuestions[currentQuestionInfo.index + 1] :
-                currentQuestions[0];
+            let currentQuestionInfo = questions.normalizedMap[card.question]
+            let nextQuestionInfo = currentQuestionInfo.index + 1 < questions.normalized.length ?
+                questions.normalized[currentQuestionInfo.index + 1] :
+                questions.normalized[0];
 
             refcurrentQuestionParty.set(nextQuestionInfo.questionId, (error) => {
                 if(!error) {
@@ -187,12 +162,12 @@ function CardsView(props) {
             })
             
         } else if(dataIsReady) {
-            let currentQuestionInfo = currentQuestionsMap[currentQuestion]
-            let nextQuestionInfo = currentQuestionInfo.index + 1 < currentQuestions.length ?
-                currentQuestions[currentQuestionInfo.index + 1] :
-                currentQuestions[0];
-            setCurrentQuestion(nextQuestionInfo.questionId);
-            setCurrentTopic(nextQuestionInfo.topicId);
+            let currentQuestionInfo = questions.normalizedMap[card.question]
+            let nextQuestionInfo = currentQuestionInfo.index + 1 < questions.normalized.length ?
+                questions.normalized[currentQuestionInfo.index + 1] :
+                questions.normalized[0];
+            
+            dispatchCard({type: 'QUESTION', payload: nextQuestionInfo.questionId});
         }
     }
 
@@ -201,10 +176,10 @@ function CardsView(props) {
         if (id !== undefined && dataIsReady) {
             setIsDisabledPrevBtn(true);
             const refcurrentQuestionParty = db.ref(`parties/${id}/currentQuestion`);
-            let currentQuestionInfo = currentQuestionsMap[currentQuestion]
+            let currentQuestionInfo = questions.normalizedMap[card.question]
             let prevQuestionInfo = currentQuestionInfo.index - 1 > 0 ?
-                currentQuestions[currentQuestionInfo.index - 1] :
-                currentQuestions[currentQuestions.length - 1];
+                questions.normalized[currentQuestionInfo.index - 1] :
+                questions.normalized[questions.normalized.length - 1];
 
             refcurrentQuestionParty.set(prevQuestionInfo.questionId, (error) => {
                 if(!error) {
@@ -213,79 +188,45 @@ function CardsView(props) {
             })
             
         } else if(dataIsReady) {
-            let currentQuestionInfo = currentQuestionsMap[currentQuestion]
-            let prevQuestionInfo = currentQuestionInfo.index + 1 < currentQuestions.length ?
-                currentQuestions[currentQuestionInfo.index - 1] :
-                currentQuestions[currentQuestions.length - 1];
-            setCurrentQuestion(prevQuestionInfo.questionId);
-            setCurrentTopic(prevQuestionInfo.topicId);
+            let currentQuestionInfo = questions.normalizedMap[card.question]
+            let prevQuestionInfo = currentQuestionInfo.index + 1 < questions.normalized.length ?
+                questions.normalized[currentQuestionInfo.index - 1] :
+                questions.normalized[questions.normalized.length - 1];
+            dispatchCard({type: 'QUESTION', payload: prevQuestionInfo.questionId});
         }
+    }
+
+    let question;
+    let title;
+    let help;
+
+    if(
+        (id !== undefined &&
+        dataIsReady &&
+        partyIsReady &&
+        questions.normalizedMap[card.question] !== undefined)
+        ||
+        (id === undefined &&
+        dataIsReady &&
+        card.question !== '' &&
+        questions.normalizedMap[card.question] !== undefined)
+    ) {
+        let topicId = questions.normalizedMap[card.question].topicId;
+        question = questions.normalizedMap[card.question].question;
+        title = topics.normalizedMap[topicId].name;
+        help = topics.normalizedMap[topicId].help;
     }
 
     return (
         <div className="party-page">
-            <Header 
-                languages={languages}
-                languageActives={languageActives}
-                languageISO={languageISO}
-                setLanguageISO={setLanguageISO}>
-            </Header>
+            <Header/>
             <Container maxWidth="xs" className="container">
-                { id !== undefined &&
-                    <CardComponent
-                        question={dataIsReady && partyIsReady && currentQuestionsMap[currentQuestion] !== undefined && currentQuestionsMap[currentQuestion].question}
-                        title={dataIsReady && partyIsReady && normalizedTopicsMap[currentTopic].name}
-                        help={dataIsReady && partyIsReady && normalizedTopicsMap[currentTopic].help}
-                        onUpdateCard={onUpdateCard}
-                        dataIsReady={dataIsReady}
-
-                        topics={topics}
-                        normalizedTopics={normalizedTopics}
-                        normalizedTopicsMap={normalizedTopicsMap}
-                        setCurrentTopic={setCurrentTopic}
-                        topicFilters={topicFilters}
-                        setTopicFilters={setTopicFilters}
-
-                        difficulties={difficulties}
-                        normalizedDifficulties={normalizedDifficulties}
-                        normalizedDifficultiesMap={normalizedDifficultiesMap}
-                        difficultyFilters={difficultyFilters}
-                        setDifficultyFilters={setDifficultyFilters}
-
-                        currentQuestions={currentQuestions}
-                        currentQuestionsMap={currentQuestionsMap}
-                        currentQuestion={currentQuestion}
-                        setCurrentQuestion={setCurrentQuestion}
-                    />
-                }
-
-                {id === undefined &&
-                    <CardComponent
-                        question={currentQuestionsMap && currentQuestion && currentQuestionsMap[currentQuestion] && currentQuestionsMap[currentQuestion].question}
-                        title={currentQuestionsMap && currentTopic && topics[currentTopic] && topics[currentTopic].name}
-                        help={currentQuestionsMap && currentTopic && topics[currentTopic] &&topics[currentTopic].help}
-                        onUpdateCard={onUpdateCard}
-                        dataIsReady={dataIsReady}
-
-                        topics={topics}
-                        normalizedTopics={normalizedTopics}
-                        normalizedTopicsMap={normalizedTopicsMap}
-                        setCurrentTopic={setCurrentTopic}
-                        topicFilters={topicFilters}
-                        setTopicFilters={setTopicFilters}
-
-                        difficulties={difficulties}
-                        normalizedDifficulties={normalizedDifficulties}
-                        normalizedDifficultiesMap={normalizedDifficultiesMap}
-                        difficultyFilters={difficultyFilters}
-                        setDifficultyFilters={setDifficultyFilters}
-
-                        currentQuestions={currentQuestions}
-                        currentQuestionsMap={currentQuestionsMap}
-                        currentQuestion={currentQuestion}
-                        setCurrentQuestion={setCurrentQuestion}
-                    />
-                }
+                <CardComponent
+                    question={question}
+                    title={title}
+                    help={help}
+                    onUpdateCard={onUpdateCard}
+                />
 
                 <div className={`${classes.container} wrapper-btn`}>
                     <Button disabled={isDisabledPrevBtn}  variant="contained" size="large" color="primary" className={classes.flexSpace} onClick={handlePrevClick}>

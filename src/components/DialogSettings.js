@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useParams } from "react-router-dom";
+import { StateContext, DispatchContext } from '../Context/GlobalContext';
 
 /* FIREBASE */
 import { db } from '../services/firebase';
@@ -58,43 +59,27 @@ const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
 });
 
-function DialogSettings(props) {
-    const {
-        dataIsReady,
-
-        topics,
-        normalizedTopics,
-        normalizedTopicsMap,
-        topicFilters,
-        setTopicFilters,
-
-        difficulties,
-        normalizedDifficulties,
-        normalizedDifficultiesMap,
-        difficultyFilters,
-        setDifficultyFilters,
-    } = props;
-
+function DialogSettings() {
     const {id} = useParams();
-
     const classes = useStylesDialog();
-
+    
+    const {card, normalizedDataIsReady: dataIsReady} = useContext(StateContext);
+    const {dispatchCard} = useContext(DispatchContext);
     const [open, setOpen] = React.useState(false);
     
     // Handle cheks states
     const [difficultyStates, setDifficultyStates] = React.useState();
-    
     const [topicStates, setTopicStates] = React.useState();
     
     React.useEffect( function initializeFilters() {
         setDifficultyStates({
-            ...difficultyFilters,
+            ...card.difficulty,
         });
 
         setTopicStates({
-            ...topicFilters,
+            ...card.topic,
         });
-    }, [difficultyFilters, topicFilters] )
+    }, [card.difficulty, card.topic] )
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -104,11 +89,11 @@ function DialogSettings(props) {
         setOpen(false);
 
         setDifficultyStates({
-            ...difficultyFilters,
+            ...card.difficulty,
         });
 
         setTopicStates({
-            ...topicFilters,
+            ...card.topic,
         });
         
     };
@@ -129,13 +114,17 @@ function DialogSettings(props) {
             });
 
         } else {
-            setDifficultyFilters({
-                ...difficultyStates,
-            });
-
-            setTopicFilters({
-                ...topicStates,
-            });
+            dispatchCard({
+                type: 'UPDATE',
+                payload: {
+                    topic: {
+                        ...topicStates
+                    },
+                    difficulty: {
+                        ...difficultyStates
+                    }
+                }
+            })
         }
     };
 
@@ -161,15 +150,9 @@ function DialogSettings(props) {
                 </AppBar>
                 <DialogContent className={classes.content}>
                     <ContentSettings 
-                        topics={topics}
-                        normalizedTopics={normalizedTopics}
-                        normalizedTopicsMap={normalizedTopicsMap}
                         topicStates={topicStates}
                         setTopicStates={setTopicStates}
                         
-                        difficulties={difficulties}
-                        normalizedDifficulties={normalizedDifficulties}
-                        normalizedDifficultiesMap={normalizedDifficultiesMap}
                         difficultyStates={difficultyStates}
                         setDifficultyStates={setDifficultyStates}
                     />
@@ -183,18 +166,32 @@ function DialogSettings(props) {
 function ContentSettings(props) {
     const classes = useStylesDialog();
     const {
-        normalizedDifficulties,
         difficultyStates,
         setDifficultyStates,
 
-        normalizedTopics,
         topicStates,
         setTopicStates
     } = props
 
+    const {topics, difficulties} = useContext(StateContext);
 
     const [allDifficultiesCheck, setAllDifficultiesCheck] = React.useState(false);
     const [allTopicsCheck, setAllTopicsCheck] = React.useState(false);
+
+    React.useEffect( function verifyCheckboxs() {
+        if( Object.values(difficultyStates).filter( v => v ).length === Object.values(difficultyStates).length ) {
+            setAllDifficultiesCheck(true);
+        } else {
+            setAllDifficultiesCheck(false);
+        }
+        
+        if( Object.values(topicStates).filter( v => v ).length !== Object.values(topicStates).length ) {
+            setAllTopicsCheck(false);
+        } else {
+            setAllTopicsCheck(true);
+        }
+
+    },[difficultyStates, topicStates]);
 
     const handleDifficultyChange = (event) => {
         const newDifficultyStates = {...difficultyStates};
@@ -237,7 +234,6 @@ function ContentSettings(props) {
             for (const topicStateId in topicStates) {
                 newTopicStates[topicStateId] = true;
             }
-            console.log(newTopicStates);
 
             setTopicStates( newTopicStates );
         } else {
@@ -252,21 +248,6 @@ function ContentSettings(props) {
 
         setAllTopicsCheck( event.target.checked );
     };
-
-    React.useEffect( function verifyCheckboxsDifficulty() {
-        if( Object.values(difficultyStates).filter( v => v ).length === Object.values(difficultyStates).length ) {
-            setAllDifficultiesCheck(true);
-        } else {
-            setAllDifficultiesCheck(false);
-        }
-        
-        if( Object.values(topicStates).filter( v => v ).length !== Object.values(topicStates).length ) {
-            setAllTopicsCheck(false);
-        } else {
-            setAllTopicsCheck(true);
-        }
-
-    },[difficultyStates, topicStates]);
 
     function createCheckboxs(elements, elementStates, handler) {
 
@@ -290,7 +271,7 @@ function ContentSettings(props) {
                                 control={<Checkbox checked={allDifficultiesCheck} onChange={handleAllDifficultiesCheck} />}
                                 label={"All"}
                             />
-                            {createCheckboxs( normalizedDifficulties, difficultyStates, handleDifficultyChange )}
+                            {createCheckboxs( difficulties.normalized, difficultyStates, handleDifficultyChange )}
                         </FormGroup>
                     </FormControl>
                     <Divider light className={classes.divider}/>
@@ -301,7 +282,7 @@ function ContentSettings(props) {
                                 control={<Checkbox checked={allTopicsCheck} onChange={handleAllTopicsCheck} />}
                                 label={"All"}
                             />
-                            {createCheckboxs( normalizedTopics, topicStates, handleTopicChange )}
+                            {createCheckboxs( topics.normalized, topicStates, handleTopicChange )}
                         </FormGroup>
                     </FormControl>
                 </Container>

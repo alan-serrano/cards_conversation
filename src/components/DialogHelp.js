@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { StateContext } from '../Context/GlobalContext';
 
 /* MATERIAL UI */
 
@@ -39,10 +40,9 @@ const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
 });
 
-function DialogHelp({children, Icon, dataIsReady}) {
-
+function DialogHelp({children, Icon}) {
     const classes = useStylesDialog();
-
+    const {normalizedDataIsReady: dataIsReady} = useContext(StateContext);
     const [open, setOpen] = React.useState(false);
 
     const handleClickOpen = () => {

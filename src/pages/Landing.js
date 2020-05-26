@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { StateContext, MethodContext } from '../Context/GlobalContext';
 import './Landing.scss';
 
 /* MATERIAL UI */
@@ -8,7 +9,9 @@ import Container from '@material-ui/core/Container';
 // Inputs
 import Button from '@material-ui/core/Button';
 
-function Landing({createNewParty, randomCard, dataIsReady}) {
+function Landing() {
+    const {normalizedDataIsReady: dataIsReady} = useContext(StateContext);
+    const {createNewParty, randomCard} = useContext(MethodContext);
 
     return (
         <div className="landing-page">

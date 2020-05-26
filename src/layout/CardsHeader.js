@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {useHistory} from 'react-router-dom';
+import { StateContext, DispatchContext } from '../Context/GlobalContext';
 
 /* MATERIAL UI */
 // Styles
@@ -30,12 +31,13 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function Header({languageActives, setLanguageISO, languageISO, languages}) {
+function Header() {
     const classes = useStyles();
     const history = useHistory();
 
+    const {languages} = useContext(StateContext);
+    const {dispatchLanguages} = useContext(DispatchContext);
     const [anchorEl, setAnchorEl] = React.useState();
-
 
     function handleLanguageClick(event) {
         setAnchorEl(event.currentTarget);
@@ -47,18 +49,18 @@ function Header({languageActives, setLanguageISO, languageISO, languages}) {
     
     function handleMenuSelect(event) {
         const { languageId } = event.currentTarget.dataset;
-        setLanguageISO(languageId)
+        dispatchLanguages({type: 'CURRENT', payload: languageId})
         setAnchorEl(null);
     }
 
     function createMenuItems() {
         const menuItems = [];
 
-        for (const languageID in languageActives) {
+        for (const languageID in languages.actives) {
             menuItems.push(
                 <MenuItem onClick={handleMenuSelect} data-language-id={languageID} key={languageID}>
                     <span style={{ textTransform: 'uppercase', marginRight: '0.5em' }}>{languageID}</span>
-                    <span>{languages[languageID] && languages[languageID].nativeName}</span>
+                    <span>{languages.all && languages.all[languageID] && languages.all[languageID].nativeName}</span>
                 </MenuItem>
             );
         }
@@ -75,7 +77,7 @@ function Header({languageActives, setLanguageISO, languageISO, languages}) {
                         <HomeIcon />
                     </Button>
                     <Button edge="start" color="inherit" aria-label="menu" onClick={handleLanguageClick}>
-                        <LanguageIcon /><span style={{marginLeft: '0.4em'}}>{languageISO}</span>
+                        <LanguageIcon /><span style={{marginLeft: '0.4em'}}>{languages.current}</span>
                     </Button>
                     <Menu
                       id="languageSelector"
@@ -86,7 +88,6 @@ function Header({languageActives, setLanguageISO, languageISO, languages}) {
                       
                     >
                         {createMenuItems()}
-                      
                     </Menu>
                 </Container>
                 

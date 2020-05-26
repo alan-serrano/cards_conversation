@@ -38,33 +38,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-function CardComponent(props) {
-    const {
-        dataIsReady,
-
-        question,
-        title,
-        help,
-
-        topics,
-        normalizedTopics,
-        normalizedTopicsMap,
-        topicFilters,
-        setTopicFilters,
-        setCurrentTopic,
-
-        difficulties,
-        normalizedDifficulties,
-        normalizedDifficultiesMap,
-        difficultyFilters,
-        setDifficultyFilters,
-
-        currentQuestions,
-        currentQuestionsMap,
-        currentQuestion,
-        setCurrentQuestion,
-    } = props;
-
+function CardComponent({question, title, help}) {
     const classes = useStyles();
 
     return (
@@ -74,34 +48,14 @@ function CardComponent(props) {
                     classes={{title: classes.flex}}
                     title={
                         <>
-                            <DialogSettings
-                                dataIsReady={dataIsReady}
-
-                                topics={topics}
-                                normalizedTopics={normalizedTopics}
-                                normalizedTopicsMap={normalizedTopicsMap}
-                                topicFilters={topicFilters}
-                                setTopicFilters={setTopicFilters}
-                                setCurrentTopic={setCurrentTopic}
-            
-                                difficulties={difficulties}
-                                normalizedDifficulties={normalizedDifficulties}
-                                normalizedDifficultiesMap={normalizedDifficultiesMap}
-                                difficultyFilters={difficultyFilters}
-                                setDifficultyFilters={setDifficultyFilters}
-
-                                currentQuestions={currentQuestions}
-                                currentQuestionsMap={currentQuestionsMap}
-                                currentQuestion={currentQuestion}
-                                setCurrentQuestion={setCurrentQuestion}
-                            />
+                            <DialogSettings />
                             <Typography variant="h5" className={`${classes.capitalize} ${classes.flexGrow}`}>
                                 {title 
                                     ? title
                                     : <Skeleton animation="wave" width="60%" height="1em" style={{margin: "0 auto"}}/>
                                 }
                             </Typography>
-                            <DialogHelp Icon={HelpIcon} dataIsReady={dataIsReady}>
+                            <DialogHelp Icon={HelpIcon}>
                                 <Container maxWidth="sm">
                                     { help }
                                 </Container>
