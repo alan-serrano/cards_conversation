@@ -197,6 +197,65 @@ function cardReducer(state, action) {
     }
 }
 
+const initialAdmin = {
+    appMain: {},
+    adminCardsMap: {},
+    adminTopicsMap: {},
+    adminDifficultiesMap: {},
+    adminCards: [],
+    adminTopics: [],
+    adminDifficulties: []
+}
+
+function reducerAdmin (state, action) {
+    switch (action.type) {
+        case 'ADMIN_CARDS_MAP':
+            
+            return {
+                ...state,
+                adminCardsMap: action.payload
+            };
+
+        case 'ADMIN_CARDS':
+            
+            return {
+                ...state,
+                adminCards: action.payload
+            };
+        
+        case 'ADMIN_TOPICS_MAP':
+            
+            return {
+                ...state,
+                adminTopicsMap: action.payload
+            };
+        
+        case 'ADMIN_TOPICS':
+            
+            return {
+                ...state,
+                adminTopics: action.payload
+            };
+        
+        case 'ADMIN_DIFFICULTIES_MAP':
+            
+            return {
+                ...state,
+                adminDifficultiesMap: action.payload
+            };
+    
+        
+        case 'ADMIN_DIFFICULTIES':
+            
+            return {
+                ...state,
+                adminDifficulties: action.payload
+            };
+    
+        default: return state;
+    }
+}
+
 function GlobalContextProvider({children}) {
     
     const [dataIsReady, setDataIsReady] = useState(false);
@@ -208,6 +267,8 @@ function GlobalContextProvider({children}) {
     const [topics, dispatchTopics] = useReducer(topicsReducer, initialTopics);
     const [difficulties, dispatchDifficulties] = useReducer(difficultiesReducer, initialDifficulties);
     const [card, dispatchCard] = useReducer(cardReducer, initialCard);
+
+    const [admin, dispatchAdmin] = useReducer(reducerAdmin, initialAdmin);
 
     React.useEffect(function connectLanguages() {
         const refLanguages = db.ref("languages");
@@ -466,7 +527,6 @@ function GlobalContextProvider({children}) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [difficulties.all, dataIsReady]);
 
-
   function initialFilter(elements) {
       const result = {};
 
@@ -522,6 +582,7 @@ function GlobalContextProvider({children}) {
         card,
         dataIsReady,
         normalizedDataIsReady,
+        admin,
     }
 
     const dispatch = {
@@ -533,12 +594,13 @@ function GlobalContextProvider({children}) {
         setDataIsReady,
         setNormalizedDataIsReady,
         setHistory,
+        dispatchAdmin,
     }
 
     const methods = {
         randomCard,
         initialFilter,
-        createNewParty
+        createNewParty,
     }
 
     return (
