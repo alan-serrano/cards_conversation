@@ -64,9 +64,9 @@ function CardComponent({question, title, help}) {
                     }
                 />
                 <CardContent>
-                    <Typography variant="body2" color="textSecondary" component="p">
+                    <Typography variant="body2" color="textSecondary" component="div">
                         {question
-                            ? question
+                            ? <div dangerouslySetInnerHTML={{ __html: question }}></div>
                             :  <>
                                 <Skeleton animation="wave" />
                                 <Skeleton animation="wave" />

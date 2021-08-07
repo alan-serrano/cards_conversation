@@ -2,18 +2,22 @@ import React, { useContext } from 'react';
 import './App.scss';
 import {HashRouter as Router, Route, useHistory} from 'react-router-dom';
 import { DispatchContext } from './Context/GlobalContext';
+import Admin from './pages/Admin/Admin';
 
 // Pages
 import Edit from './pages/Edit';
 import CardsView from './pages/Cards';
 import Landing from './pages/Landing';
-import Admin from './pages/Admin';
+// import Admin from './pages/Admin';
 
 function App() {
   return (
+    <>
     <Router>
       <AppRoutes/>
+      <Admin/>
     </Router>
+    </>
   );
 }
 
@@ -30,7 +34,6 @@ function AppRoutes() {
       <Landing/>
     </Route>
     <Route exact path="/edit"><Edit/></Route>
-    <Route exact path="/admin"><Admin/></Route>
     <Route exact path={["/room/:id", "/random"]}>
       <CardsView />
     </Route>
