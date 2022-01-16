@@ -100,7 +100,7 @@ export default function Admin() {
             } else if (topics[card.topicId].languages.en) {
               additionalData.topic = appData['en']['topics'][card.topicId].name;
             } else {
-              let otherLanguage = Object.key(topics[card.topicId].languages)[0];
+              let otherLanguage = Object.keys(topics[card.topicId].languages)[0];
               additionalData.topic = appData[otherLanguage]['topics'][card.topicId].name;
             }
 
